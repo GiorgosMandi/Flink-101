@@ -26,7 +26,7 @@ public class DataLabelingExample {
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(dataFilePath))
         .build();
 
-    var processed = env.fromSource(fileSource, WatermarkStrategy.noWatermarks(), "avg-source")
+    var processed = env.fromSource(fileSource, WatermarkStrategy.noWatermarks(), "purchases-source")
         .map(Integer::parseInt)
         .process(
             // tag values
