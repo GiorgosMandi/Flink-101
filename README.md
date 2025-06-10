@@ -2,6 +2,8 @@
 
 Tutorial based on this [course](https://www.udemy.com/course/apache-flink-a-real-time-hands-on-course-on-flink/?couponCode=ST21MT30625G2)
 
+## Execution
+
 To run, start the cluster using
 
 ```bash
@@ -19,3 +21,7 @@ then execute using
 ```bash
 $ path/to/flink/bin/flink run -c gr.edu.flink.<class> ./target/original-Flink-101-1.0-SNAPSHOT.jar
 ```
+
+## Additional content
+
+- [Windows](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/datastream/operators/windows/)

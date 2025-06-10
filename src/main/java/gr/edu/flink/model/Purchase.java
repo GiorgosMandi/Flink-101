@@ -16,7 +16,7 @@ public class Purchase {
   private int amount;
 
   public Purchase(String date, String month, String category, String product, int amount) {
-    var formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+    var formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
     this.date = LocalDate.parse(date, formatter);
     this.month = month;
     this.category = category;
@@ -24,5 +24,8 @@ public class Purchase {
     this.amount = amount;
   }
 
-
+  @Override
+  public String toString() {
+    return String.format("Purchase(%s, %s, %s)", product, month, amount);
+  }
 }

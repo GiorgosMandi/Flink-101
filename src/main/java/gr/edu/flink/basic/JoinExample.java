@@ -1,4 +1,4 @@
-package gr.edu.flink;
+package gr.edu.flink.basic;
 
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
