@@ -24,7 +24,7 @@ public class JoinExample {
     final ParameterTool parameterTool = ParameterTool.fromArgs(args);
     env.getConfig().setGlobalJobParameters(parameterTool);
     // load `person` file and parse it into Tuple<Integer, String>
-    var personFilePath = "src/main/resources/inner-joins/person";
+    var personFilePath = "src/main/resources/person";
     FileSource<String> personSource = FileSource
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(personFilePath))
         .build();
@@ -36,7 +36,7 @@ public class JoinExample {
 
 
     // load `location` file and parse it into Tuple<Integer, String>
-    var locationFilePath = "src/main/resources/inner-joins/location";
+    var locationFilePath = "src/main/resources/location";
     FileSource<String> locationSource = FileSource
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(locationFilePath))
         .build();
@@ -81,7 +81,6 @@ public class JoinExample {
     public Tuple3<Integer, String, String> join(Tuple2<Integer, String> person,
                                                 Tuple2<Integer, String> location
     ) throws Exception {
-      System.out.println(new Tuple3<>(person.f0, person.f1, location.f1));
       return new Tuple3<>(person.f0, person.f1, location.f1);
     }
   }
