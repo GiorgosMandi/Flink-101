@@ -24,7 +24,7 @@ public class JoinExample {
     final ParameterTool parameterTool = ParameterTool.fromArgs(args);
     env.getConfig().setGlobalJobParameters(parameterTool);
     // load `person` file and parse it into Tuple<Integer, String>
-    var personFilePath = "src/main/resources/person";
+    var personFilePath = "src/main/resources/datasets/person";
     FileSource<String> personSource = FileSource
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(personFilePath))
         .build();
@@ -36,7 +36,7 @@ public class JoinExample {
 
 
     // load `location` file and parse it into Tuple<Integer, String>
-    var locationFilePath = "src/main/resources/location";
+    var locationFilePath = "src/main/resources/datasets/location";
     FileSource<String> locationSource = FileSource
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(locationFilePath))
         .build();
@@ -59,7 +59,7 @@ public class JoinExample {
         .window(TumblingProcessingTimeWindows.of(Duration.ofSeconds(100)))
         .apply(new PersonLocationJoinFunction());
 
-    var outputPath = "src/main/resources/inner-joins/output";
+    var outputPath = "src/main/resources/datasets/inner-joins/output";
     joined.writeAsCsv(outputPath, FileSystem.WriteMode.OVERWRITE);
     joined.print();
 

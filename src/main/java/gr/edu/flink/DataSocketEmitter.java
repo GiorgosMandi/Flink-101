@@ -1,4 +1,4 @@
-package gr.edu.flink.basic;
+package gr.edu.flink;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -12,12 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 public class DataSocketEmitter {
 
   public static void main(String[] args) throws Exception {
-    emitPurchasesWithPauses();
+    emitNumberPairs();
   }
 
 
   private static void emitPurchases() throws Exception {
-    var dataFilePath = "src/main/resources/purchases";
+    var dataFilePath = "src/main/resources/datasets/purchases";
     log.info("Initializing socket to emit Purchases.");
     try (
         var listener = new ServerSocket(9999);
@@ -60,7 +60,7 @@ public class DataSocketEmitter {
   }
 
   private static void emitPurchasesWithPauses() throws Exception {
-    var dataFilePath = "src/main/resources/purchases";
+    var dataFilePath = "src/main/resources/datasets/purchases";
     log.info("Initializing socket to emit Purchases.");
     try (
         var listener = new ServerSocket(9999);
@@ -83,6 +83,25 @@ public class DataSocketEmitter {
         else {
           Thread.sleep(50);
         }
+      }
+      log.info("Closing connection: {}. ", socket);
+    }
+  }
+
+  private static void emitNumberPairs() throws Exception {
+    log.info("Initializing socket to emit Random Numbers.");
+    try (
+        var listener = new ServerSocket(9999);
+        Socket socket = listener.accept()
+    ) {
+      log.info("Got new connection: {}. ", socket);
+      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      for (int i =0; i<100; i++){
+        var key = (i%2)+1;
+        var value = String.format("%s,%s", key, i);
+        log.info("Sending -> '{}'. ", value);
+        out.println(value);
+        Thread.sleep(50);
       }
       log.info("Closing connection: {}. ", socket);
     }

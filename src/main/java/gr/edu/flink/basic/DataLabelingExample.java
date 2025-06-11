@@ -21,7 +21,7 @@ public class DataLabelingExample {
 
     final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-    var dataFilePath = "src/main/resources/numbers";
+    var dataFilePath = "src/main/resources/datasets/numbers";
     FileSource<String> fileSource = FileSource
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(dataFilePath))
         .build();
@@ -45,8 +45,8 @@ public class DataLabelingExample {
     DataStream<Integer> evenData = processed.getSideOutput(evenTag);
     DataStream<Integer> oddData = processed.getSideOutput(oddTag);
 
-    evenData.writeAsText("src/main/resources/outputs/even");
-    oddData.writeAsText("src/main/resources/outputs/odd");
+    evenData.writeAsText("src/main/resources/datasets/outputs/even");
+    oddData.writeAsText("src/main/resources/datasets/outputs/odd");
 
     env.execute("Labeling Example");
   }

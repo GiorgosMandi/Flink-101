@@ -16,7 +16,7 @@ public class ReduceExample {
 
     final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-    var dataFilePath = "src/main/resources/purchases";
+    var dataFilePath = "src/main/resources/datasets/purchases";
     FileSource<String> fileSource = FileSource
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(dataFilePath))
         .build();
