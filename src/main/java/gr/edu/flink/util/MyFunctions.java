@@ -1,5 +1,6 @@
 package gr.edu.flink.util;
 
+import gr.edu.flink.model.Employee;
 import gr.edu.flink.model.Purchase;
 import lombok.experimental.UtilityClass;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -15,6 +16,14 @@ public class MyFunctions {
     public Purchase map(String value) {
       var words = value.split(",");
       return new Purchase(words[0], words[1], words[2], words[3], Integer.parseInt(words[4]));
+    }
+  }
+
+  public static class EmployeeParser implements MapFunction<String, Employee> {
+    @Override
+    public Employee map(String value) {
+      var words = value.split(",");
+      return new Employee(words[0], words[1], words[2], words[3], words[4]);
     }
   }
 
