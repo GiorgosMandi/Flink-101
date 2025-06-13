@@ -1,5 +1,7 @@
 package gr.edu.flink.windows;
 
+import static gr.edu.flink.util.Constants.SOCKET_PORT;
+
 import gr.edu.flink.util.MyFunctions;
 import java.time.Duration;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -13,9 +15,9 @@ public class ProcessingTimeSlidingWindowExample {
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-    env.socketTextStream("localhost", 9999)
+    env.socketTextStream("localhost", SOCKET_PORT)
         .map(new MyFunctions.PurchaseParser())
-        .map(p -> Tuple3.of(p.getMonth(), p.getAmount(), 0))
+        .map(p -> Tuple3.of(p.month(), p.amount(), 0))
         .returns(Types.TUPLE(Types.STRING, Types.INT, Types.INT))
         .keyBy(t -> t.f0)
         .window(SlidingEventTimeWindows.of(Duration.ofSeconds(2), Duration.ofSeconds(1)))

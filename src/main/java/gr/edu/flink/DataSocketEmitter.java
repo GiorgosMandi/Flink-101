@@ -1,5 +1,7 @@
 package gr.edu.flink;
 
+import static gr.edu.flink.util.Constants.SOCKET_PORT;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.PrintWriter;
@@ -12,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DataSocketEmitter {
 
   public static void main(String[] args) throws Exception {
-    emitNumberPairs();
+    emitResignedEmployees();
   }
 
 
@@ -20,7 +22,7 @@ public class DataSocketEmitter {
     var dataFilePath = "src/main/resources/datasets/purchases";
     log.info("Initializing socket to emit Purchases.");
     try (
-        var listener = new ServerSocket(9999);
+        var listener = new ServerSocket(SOCKET_PORT);
         Socket socket = listener.accept()
     ) {
       log.info("Got new connection: {}. ", socket);
@@ -41,7 +43,7 @@ public class DataSocketEmitter {
     log.info("Initializing socket to emit Random Numbers.");
     var rand =  new Random();
     try (
-        var listener = new ServerSocket(9999);
+        var listener = new ServerSocket(SOCKET_PORT);
         Socket socket = listener.accept()
     ) {
       log.info("Got new connection: {}. ", socket);
@@ -63,7 +65,7 @@ public class DataSocketEmitter {
     var dataFilePath = "src/main/resources/datasets/purchases";
     log.info("Initializing socket to emit Purchases.");
     try (
-        var listener = new ServerSocket(9999);
+        var listener = new ServerSocket(SOCKET_PORT);
         Socket socket = listener.accept()
     ) {
       log.info("Got new connection: {}. ", socket);
@@ -91,7 +93,7 @@ public class DataSocketEmitter {
   private static void emitNumberPairs() throws Exception {
     log.info("Initializing socket to emit Random Numbers.");
     try (
-        var listener = new ServerSocket(9999);
+        var listener = new ServerSocket(SOCKET_PORT);
         Socket socket = listener.accept()
     ) {
       log.info("Got new connection: {}. ", socket);
@@ -101,6 +103,27 @@ public class DataSocketEmitter {
         var value = String.format("%s,%s", key, i);
         log.info("Sending -> '{}'. ", value);
         out.println(value);
+        Thread.sleep(50);
+      }
+      log.info("Closing connection: {}. ", socket);
+    }
+  }
+
+  private static void emitResignedEmployees() throws Exception {
+    var dataFilePath = "src/main/resources/datasets/employees_small";
+    log.info("Initializing socket to emit Employees.");
+    try (
+        var listener = new ServerSocket(SOCKET_PORT);
+        Socket socket = listener.accept()
+    ) {
+      log.info("Got new connection: {}. ", socket);
+      BufferedReader br = new BufferedReader(new FileReader(dataFilePath));
+
+      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      String line;
+      while ((line = br.readLine()) != null) {
+        out.println(line);
+        log.info("Sending -> '{}'. ", line);
         Thread.sleep(50);
       }
       log.info("Closing connection: {}. ", socket);

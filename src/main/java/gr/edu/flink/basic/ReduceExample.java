@@ -24,8 +24,8 @@ public class ReduceExample {
     env
         .fromSource(fileSource, WatermarkStrategy.noWatermarks(), "purchases-source")
         .map(new MyFunctions.PurchaseParser())
-        .keyBy(Purchase::getMonth)
-        .map(p -> Tuple3.of(p.getMonth(), p.getAmount(), 0))
+        .keyBy(Purchase::month)
+        .map(p -> Tuple3.of(p.month(), p.amount(), 0))
         .returns(Types.TUPLE(Types.STRING, Types.INT, Types.INT))
         .keyBy(t -> t.f0)
         .reduce(new MyFunctions.AmountReducer())

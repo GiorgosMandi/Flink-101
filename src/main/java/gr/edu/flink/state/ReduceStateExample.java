@@ -1,5 +1,8 @@
 package gr.edu.flink.state;
 
+import static gr.edu.flink.util.Constants.SOCKET_PORT;
+
+import java.time.Duration;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringEncoder;
@@ -10,9 +13,9 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.file.sink.FileSink;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 import org.apache.flink.util.Collector;
 
@@ -21,25 +24,33 @@ public class ReduceStateExample {
   public static void main(String[] args) throws Exception {
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    var sum = env.socketTextStream("localhost", 9999)
+
+    var outputPath = "src/main/resources/outputs/reduce-state";
+    FileSink<String> sink = FileSink
+        .forRowFormat(
+            new Path(outputPath),
+            new SimpleStringEncoder<String>("UTF-8")
+        )
+        .withRollingPolicy(
+            DefaultRollingPolicy.builder()
+                .withRolloverInterval(Duration.ofMinutes(15))
+                .withInactivityInterval(Duration.ofMinutes(5))
+                .build()
+        )
+        .build();
+
+    env.socketTextStream("localhost", SOCKET_PORT)
         .map(l -> {
           var parts = l.split(",");
           return new Tuple2<>(Long.parseLong(parts[0]), parts[1]);
         })
         .returns(Types.TUPLE(Types.LONG, Types.STRING))
         .keyBy(t -> t.f0)
-        .flatMap(new StatefulMap());
-
-    sum.addSink(StreamingFileSink
-
-        .forRowFormat(new Path("src/main/resources/datasets/outputs/state"),
-            new SimpleStringEncoder<Long>("UTF-8"))
-        .withRollingPolicy(DefaultRollingPolicy.builder().build())
-        .build());
-
+        .flatMap(new StatefulMap())
+        .map(Object::toString)
+        .sinkTo(sink);
     // execute program
     env.execute("State");
-
   }
 
 
@@ -69,19 +80,20 @@ public class ReduceStateExample {
       }
     }
 
+    @Override
     public void open(Configuration conf) {
 
-      ValueStateDescriptor<Long> descriptor2 = new ValueStateDescriptor<Long>("count", Long.class);
+      ValueStateDescriptor<Long> descriptor2 = new ValueStateDescriptor<>("count", Long.class);
       count = getRuntimeContext().getState(descriptor2);
 
       ReducingStateDescriptor<Long>
-          sumDesc = new ReducingStateDescriptor<Long>("reducing sum", new SumReduce(), Long.class);
+          sumDesc = new ReducingStateDescriptor<>("reducing sum", new SumReduce(), Long.class);
       sum = getRuntimeContext().getReducingState(sumDesc);
     }
 
-    public class SumReduce implements ReduceFunction<Long> {
-      public Long reduce(Long commlativesum, Long currentvalue) {
-        return commlativesum + currentvalue;
+    public static class SumReduce implements ReduceFunction<Long> {
+      public Long reduce(Long sum, Long val) {
+        return sum + val;
       }
     }
   }

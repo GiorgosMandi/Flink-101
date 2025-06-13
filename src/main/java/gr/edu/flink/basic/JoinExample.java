@@ -4,15 +4,17 @@ import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.serialization.SimpleStringEncoder;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.connector.file.sink.FileSink;
 import org.apache.flink.connector.file.src.FileSource;
 import org.apache.flink.connector.file.src.reader.TextLineInputFormat;
-import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 
 public class JoinExample {
@@ -29,11 +31,10 @@ public class JoinExample {
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(personFilePath))
         .build();
     DataStream<Tuple2<Integer, String>> personStream = env
-        .fromSource(personSource, WatermarkStrategy.noWatermarks(),"person-source")
+        .fromSource(personSource, WatermarkStrategy.noWatermarks(), "person-source")
         .map(new LineParser());
 
     personStream.print();
-
 
     // load `location` file and parse it into Tuple<Integer, String>
     var locationFilePath = "src/main/resources/datasets/location";
@@ -41,10 +42,22 @@ public class JoinExample {
         .forRecordStreamFormat(new TextLineInputFormat(), new Path(locationFilePath))
         .build();
     DataStream<Tuple2<Integer, String>> locationStream = env
-        .fromSource(locationSource, WatermarkStrategy.noWatermarks(),"location-source")
+        .fromSource(locationSource, WatermarkStrategy.noWatermarks(), "location-source")
         .map(new LineParser());
 
-    locationStream.print();
+    var outputPath = "src/main/resources/datasets/inner-joins/output";
+    FileSink<String> sink = FileSink
+        .forRowFormat(
+            new Path(outputPath),
+            new SimpleStringEncoder<String>("UTF-8")
+        )
+        .withRollingPolicy(
+            DefaultRollingPolicy.builder()
+                .withRolloverInterval(Duration.ofMinutes(15))
+                .withInactivityInterval(Duration.ofMinutes(5))
+                .build()
+        )
+        .build();
 
     // Warning: This join produces no results!
     //  Even though the window is 100 seconds, the bounded input files are processed too quickly and independently.
@@ -52,16 +65,14 @@ public class JoinExample {
     //  For joining bounded data, use the Table API or enable batch execution mode.
     // Note: Using `JoinOperatorBase.JoinHint` we can instruct Flink which join algorithm to use
     // perform join
-    DataStream<Tuple3<Integer, String, String>> joined = personStream
+    personStream
         .join(locationStream)
         .where(p -> p.f0)
         .equalTo(l -> l.f0)
         .window(TumblingProcessingTimeWindows.of(Duration.ofSeconds(100)))
-        .apply(new PersonLocationJoinFunction());
-
-    var outputPath = "src/main/resources/datasets/inner-joins/output";
-    joined.writeAsCsv(outputPath, FileSystem.WriteMode.OVERWRITE);
-    joined.print();
+        .apply(new PersonLocationJoinFunction())
+        .map(Object::toString)
+        .sinkTo(sink);
 
     env.execute("Join Example");
   }
@@ -80,10 +91,8 @@ public class JoinExample {
     @Override
     public Tuple3<Integer, String, String> join(Tuple2<Integer, String> person,
                                                 Tuple2<Integer, String> location
-    ) throws Exception {
+    ) {
       return new Tuple3<>(person.f0, person.f1, location.f1);
     }
   }
-
-
 }

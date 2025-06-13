@@ -1,7 +1,7 @@
 package gr.edu.flink.state;
 
 
-import org.apache.flink.api.common.functions.MapFunction;
+import java.time.Duration;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.serialization.SimpleStringEncoder;
@@ -11,12 +11,12 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.file.sink.FileSink;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 import org.apache.flink.util.Collector;
 
@@ -47,24 +47,33 @@ public class CheckpointingDemo {
 
     //StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 100));
-    // number of restart attempts , delay in each restart
+    // number of restart attempts, delay in each restart
 
     DataStream<String> data = env.socketTextStream("localhost", 9090);
 
-    DataStream<Long> sum = data.map(new MapFunction<String, Tuple2<Long, String>>() {
-          public Tuple2<Long, String> map(String s) {
-            String[] words = s.split(",");
-            return new Tuple2<Long, String>(Long.parseLong(words[0]), words[1]);
-          }
-        })
+    var outputPath = "src/main/resources/outputs/checkpoint-demo";
+    FileSink<String> sink = FileSink
+        .forRowFormat(
+            new Path(outputPath),
+            new SimpleStringEncoder<String>("UTF-8")
+        )
+        .withRollingPolicy(
+            DefaultRollingPolicy.builder()
+                .withRolloverInterval(Duration.ofMinutes(15))
+                .withInactivityInterval(Duration.ofMinutes(5))
+                .build()
+        )
+        .build();
+
+    data.map(s -> {
+              String[] words = s.split(",");
+              return Tuple2.of(Long.parseLong(words[0]), words[1]);
+            }
+        )
         .keyBy(t -> t.f0)
-        .flatMap(new StatefulMap());
-    //sum.writeAsText("/home/jivesh/state2");
-    sum.addSink(StreamingFileSink
-        .forRowFormat(new Path("/home/jivesh/state2"),
-            new SimpleStringEncoder<Long>("UTF-8"))
-        .withRollingPolicy(DefaultRollingPolicy.builder().build())
-        .build());
+        .flatMap(new StatefulMap())
+        .map(Object::toString)
+        .sinkTo(sink);
 
     // execute program
     env.execute("State");
@@ -101,15 +110,14 @@ public class CheckpointingDemo {
       }
     }
 
+    @Override
     public void open(Configuration conf) {
       ValueStateDescriptor<Long> descriptor =
-          new ValueStateDescriptor<Long>("sum", TypeInformation.of(new TypeHint<Long>() {
-          }));
+          new ValueStateDescriptor<>("sum", TypeInformation.of(new TypeHint<>() {}));
       sum = getRuntimeContext().getState(descriptor);
 
       ValueStateDescriptor<Long> descriptor2 =
-          new ValueStateDescriptor<Long>("count", TypeInformation.of(new TypeHint<Long>() {
-          }));
+          new ValueStateDescriptor<>("count", TypeInformation.of(new TypeHint<>() {}));
       count = getRuntimeContext().getState(descriptor2);
     }
   }

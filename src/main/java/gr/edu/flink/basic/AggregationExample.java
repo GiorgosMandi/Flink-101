@@ -28,12 +28,12 @@ public class AggregationExample {
         .map(p -> Tuple2.of(p, 1))
         .returns(Types.TUPLE(TypeInformation.of(Purchase.class), Types.INT));
 
-    mapped.keyBy(t -> t.f0.getMonth()).sum(1).print("Sum");
-    mapped.keyBy(t -> t.f0.getMonth()).min(1).print("Minimum");
+    mapped.keyBy(t -> t.f0.month()).sum(1).print("Sum");
+    mapped.keyBy(t -> t.f0.month()).min(1).print("Minimum");
     // Note: beware the other values of the tuple, are not the same as of the min/max, etc.
     // Note: to maintain also the other fields, use minBy, maxBy, etc.
-    mapped.keyBy(t -> t.f0.getMonth()).minBy(1).print("Min By");
-    mapped.keyBy(t -> t.f0.getMonth()).maxBy(1).print("Max By");
+    mapped.keyBy(t -> t.f0.month()).minBy(1).print("Min By");
+    mapped.keyBy(t -> t.f0.month()).maxBy(1).print("Max By");
 
     env.execute("Aggregation over Profit per month");
   }

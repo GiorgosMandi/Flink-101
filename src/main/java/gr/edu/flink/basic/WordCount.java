@@ -1,5 +1,7 @@
 package gr.edu.flink.basic;
 
+import static gr.edu.flink.util.Constants.SOCKET_PORT;
+
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -13,7 +15,7 @@ public class WordCount {
     final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
     // Source: Read text from socket
-    DataStream<String> text = env.socketTextStream("localhost", 9999);
+    DataStream<String> text = env.socketTextStream("localhost", SOCKET_PORT);
 
     // Process: Split into words, map to (word, 1), and sum counts
     DataStream<Tuple2<String, Integer>> wordCounts = text

@@ -1,5 +1,7 @@
 package gr.edu.flink.windows;
 
+import static gr.edu.flink.util.Constants.SOCKET_PORT;
+
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -13,7 +15,7 @@ public class EventTimeTumblingWindowExample {
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-    env.socketTextStream("localhost", 9999)
+    env.socketTextStream("localhost", SOCKET_PORT)
         .map(l -> {
           var parts = l.split(",");
           return new Tuple2<>(Long.parseLong(parts[0]), Integer.parseInt((parts[1])));
