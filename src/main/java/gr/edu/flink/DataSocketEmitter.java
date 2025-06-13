@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DataSocketEmitter {
 
   public static void main(String[] args) throws Exception {
-    emitResignedEmployees();
+    emitTrades();
   }
 
 
@@ -33,7 +33,6 @@ public class DataSocketEmitter {
       while ((line = br.readLine()) != null) {
         out.println(line);
         log.info("Sending -> '{}'. ", line);
-        Thread.sleep(50);
       }
       log.info("Closing connection: {}. ", socket);
     }
@@ -112,6 +111,27 @@ public class DataSocketEmitter {
   private static void emitResignedEmployees() throws Exception {
     var dataFilePath = "src/main/resources/datasets/employees_small";
     log.info("Initializing socket to emit Employees.");
+    try (
+        var listener = new ServerSocket(SOCKET_PORT);
+        Socket socket = listener.accept()
+    ) {
+      log.info("Got new connection: {}. ", socket);
+      BufferedReader br = new BufferedReader(new FileReader(dataFilePath));
+
+      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      String line;
+      while ((line = br.readLine()) != null) {
+        out.println(line);
+        log.info("Sending -> '{}'. ", line);
+        Thread.sleep(50);
+      }
+      log.info("Closing connection: {}. ", socket);
+    }
+  }
+
+  private static void emitTrades() throws Exception {
+    var dataFilePath = "src/main/resources/datasets/trades";
+    log.info("Initializing socket to emit Trades.");
     try (
         var listener = new ServerSocket(SOCKET_PORT);
         Socket socket = listener.accept()

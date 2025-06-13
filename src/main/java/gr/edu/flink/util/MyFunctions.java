@@ -2,6 +2,7 @@ package gr.edu.flink.util;
 
 import gr.edu.flink.model.Employee;
 import gr.edu.flink.model.Purchase;
+import gr.edu.flink.model.Trade;
 import lombok.experimental.UtilityClass;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
@@ -50,6 +51,14 @@ public class MyFunctions {
           current.f1 + preResult.f1,
           preResult.f1 + 1
       );
+    }
+  }
+
+  public static class TradeParser implements MapFunction<String, Trade> {
+    @Override
+    public Trade map(String value) {
+      var words = value.split(",");
+      return new Trade(words[0], words[1], words[2], words[3]);
     }
   }
 }
